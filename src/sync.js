@@ -1,6 +1,8 @@
 const req = require("./requests");
 
 const syncPeopleDBs = async () => {
+  const res = { added: [], flagged: [] };
+
   // filter for client or worker only
   const cwFilter = {
     or: [
@@ -41,16 +43,21 @@ const syncPeopleDBs = async () => {
 
   // check for duplicates before adding to everyone db
   const everyoneSet = new Set(everyone[0]);
-  for (let p in people)
-    if (!everyoneSet.has(p)) req.addToEveryone(p, people[p]);
+  for (let person in people)
+    if (!everyoneSet.has(person)) {
+      req.addToEveryone(person, people[person]);
+      res.added.push(person);
+    }
 
   // flag everyone db syncing errors
   for (let i = 0; i < everyone[0].length; i++) {
     const person = everyone[0][i];
-    if (!clientSet.has(person) && !workerSet.has(person))
+    if (!clientSet.has(person) && !workerSet.has(person)) {
       req.flagInEveryone(everyone[1][i]);
+      res.flagged.push(person);
+    }
   }
-  return people;
+  return res;
 };
 
 module.exports = syncPeopleDBs;
